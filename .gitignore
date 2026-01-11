@@ -1,0 +1,16 @@
+__pycache__/
+
+*.pptx
+*.docx
+
+.env/
+env/
+.venv/
+.pytest_cache/
+
+DELETE_ME.py
+
+*.db
+
+.vscode/
+.idea/
