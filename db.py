@@ -1,12 +1,16 @@
-from sqlalchemy import create_engine, Engine, MetaData, Table, Column, Integer, String, DateTime, ForeignKey, Text, Index, select, insert
+from sqlalchemy import create_engine, Engine, MetaData, Table, Column, Integer, String, DateTime, ForeignKey, Text, Index, select, insert, delete
+from sqlalchemy.sql import ClauseElement
 from datetime import datetime, timedelta
 import config 
 import utils
+from typing import Sequence
 
 #*****************************************************
 #   Setting up the database schema / defining tables
 #*****************************************************
 metadata = MetaData()
+
+# Defining Tables
 
 tblIGroups = Table('tblIGroups',
     metadata,
@@ -23,14 +27,14 @@ tblIResolved = Table('tblIResolved',
 tblIMachines = Table('tblIMachines',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('groupID', Integer, ForeignKey('tblIGroups.id'), nullable=True),
+    Column('groupID', Integer, ForeignKey('tblIGroups.id', ondelete="SET NULL"), nullable=True),
     Column('machineName', String)
 )
 
 tblErrors = Table('tblErrors',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('machineID', Integer, ForeignKey('tblIMachines.id'), nullable=False),
+    Column('machineID', Integer, ForeignKey('tblIMachines.id')),
     Column('errorNumber', String),
     Column('errorName', String),
     Column('description', String)
@@ -39,17 +43,17 @@ tblErrors = Table('tblErrors',
 tblIResolution = Table('tblIResolution',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('machineID', Integer, ForeignKey('tblIMachines.id'), nullable=False),
-    Column('errorID', Integer, ForeignKey('tblErrors.id'), nullable=False),
+    Column('machineID', Integer, ForeignKey('tblIMachines.id')),
+    Column('errorID', Integer, ForeignKey('tblErrors.id')),
     Column('notes', Text)
 )
 
 tblIncidents = Table('tblIncidents',
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
-    Column('machineID', Integer, ForeignKey('tblIMachines.id'), nullable=False),
-    Column('resolvedID', Integer, ForeignKey('tblIResolved.id'), nullable=False),
-    Column('resolutionID', Integer, ForeignKey('tblIResolution.id'), nullable=True),
+    Column('machineID', Integer, ForeignKey('tblIMachines.id')),
+    Column('resolvedID', Integer, ForeignKey('tblIResolved.id')),
+    Column('resolutionID', Integer, ForeignKey('tblIResolution.id')),
     Column('occurrenceTime', DateTime, nullable=False),
     Column('resolvedTime', DateTime, nullable=True),
     Column('notes', Text)
@@ -88,7 +92,7 @@ class Database:
                 - code: 200 = ok, 400 = error, 
                 - message: sucessfull or error message,
                 - data: if payload is provided.
-        """
+        """ 
         try:
             print("Creating all tables...")
             with self.engine.begin() as conn:
@@ -105,20 +109,48 @@ class Database:
         except Exception as e:
             return utils.status_error(payload=str(e))
         
-    
-    def delete_tables(self)-> bool|str:
-        """Drops all tables in given database
+# GENERAL DELETE STATEMENT
+
+    def delete_rows(self, table: Table, condition: Sequence[ClauseElement]) -> int:
+        """Delete rows from a table based on given conditions.
+
+        Args:
+            table (Table): SQLAlchemy Table object from which to delete rows.
+            condition (Sequence[ClauseElement]): A sequence of SQLAlchemy ClauseElement conditions to filter which rows to delete.
+            can be created using [table.c.column_name == value]
+            
+        Raises:
+            ValueError: If no conditions are provided.
 
         Returns:
-            bool|str: Returns True if sucessfull, a str with error if not
+            int: Number of rows deleted.
         """
-        try:            
+        if len(condition) == 0:
+            raise ValueError("At least one condition must be provided for deletion.")
+        
+        with self.engine.begin() as conn:
+            stm = delete(table).where(*condition)
+            result = conn.execute(stm)
+            
+        return result.rowcount
+    """
+    def delete_tables(self)-> bool|str:
+        
+        with self.engine.begin() as conn:
+            metadata.drop_all(conn)  
+            return utils.status_ok()
+
+
+    def delete_groups(self, group_id: int)-> dict:
+        # Delete a machine group and all belonging machines, errors, resolutions, and incidents
+        try:
             with self.engine.begin() as conn:
-                metadata.drop_all(conn)  
-                return utils.status_ok()
+                stm = delete(tblIGroups).where(tblIGroups.c.id == group_id)
+                conn.execute(stm)
+            return utils.status_ok()
         except Exception as e:
             return utils.status_error(payload=str(e))
-
+    """
     def populate_standard_resolved_statuses(self, status: tuple = resolved_statuses)-> bool|str:
         """This gives the pre defines resolved statuses for the database.
             Unresolved, In Progress, Temporarily resolved, or Resolveds.
@@ -163,10 +195,11 @@ class Database:
         if conditions:
             stm = stm.where(*conditions)
         
+        
+        else:
             with self.engine.connect() as conn:    
                 return conn.execute(stm).mappings().all() #.fetchall() is legacy core 1.x, .all() is core 2.x way
-        else:
-            return False
+            #return False
         
     def list_incidents(self, resolved: int=None, machine_id: int=None, start_date: datetime=None, end_date: datetime=None, note_search: str=None):
         stm = select(tblIncidents)
@@ -252,7 +285,32 @@ class Database:
         stm = insert(tblIGroups).values(groupName=group_name).returning(tblIGroups.c.id)
         with self.engine.begin() as conn:
             return conn.execute(stm).scalar_one_or_none()
-            
+        
+    #******************************************************************************************************************************************************************
+    # Generalized insert function
+    #******************************************************************************************************************************************************************
+    
+    def new_insert(self, table: Table, conditions: Sequence[ClauseElement]) -> int:
+        """ Generalized insert function to insert a new row into a specified table with given conditions.
+
+        Args:
+            table (Table): SQLAlchemy Table object where to insert new row
+            conditions (Sequence[ClauseElement]): A sequence of SQLAlchemy ClauseElement conditions to define the data to insert.
+            can be created using {"column_name": value, ...} in form of a dictionary or other iterables.
+
+        Raises:
+            ValueError: If no conditions are provided.
+
+        Returns:
+            int: The ID of the newly inserted row, or None if no row was inserted.
+        """
+        if len(conditions) == 0:
+            raise ValueError("At least one condition must be provided for insertion.")
+        
+        stm = insert(table).values(**conditions).returning(table.c.id)
+        with self.engine.begin() as conn:
+            return conn.execute(stm).scalar_one_or_none()
+    
     def insert_machine(self, machine_name=None, group_id=None):
             conditions = {}
 
@@ -260,7 +318,7 @@ class Database:
                 conditions["machineName"]= machine_name
             if group_id:
                 conditions["groupID"]= group_id
-                
+            print(f"********************************************************************************* TYPE: {type(group_id)} VALUE: {group_id} *******************************")
             if not conditions:
                 return None  # No data to insert
 

@@ -21,4 +21,11 @@ def status_ok(payload: Optional[Any]=None) -> dict:
 def status_error(payload: Optional[Any]=None) -> dict:
     """Standard error response (code 400)."""
     return status(400, "Unsuccessful", payload)
-    
+
+def menu_map(options: list) -> dict:
+    group_map = {}
+    i = 0
+    for item in options:
+        i += 1
+        group_map[i] = {"id":str(item["id"]) ,"groupName": str(item["groupName"])}
+    return group_map
