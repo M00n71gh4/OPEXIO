@@ -8,5 +8,5 @@ import os
 
 TEST_DB = os.getenv("TEST_DB", "sqlite:///test.db")
 PROD_DB = os.getenv("PROD_DB", "sqlite:///opexio.db")
-TRAINING_DB = os.getenv("TRAINING_DB", "sqlite:///training.db")
+
 

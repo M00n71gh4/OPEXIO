@@ -8,9 +8,10 @@ env/
 .venv/
 .pytest_cache/
 
-DELETE_ME.py
-
 *.db
 
 .vscode/
 .idea/
+inspector.py
+populate.py
+setup_demo.py
