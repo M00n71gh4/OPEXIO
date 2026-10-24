@@ -1,6 +1,6 @@
-# OPEXIO INCIDENT MONITOR
+# OPEXIO 
 
-#### Video Demo:  <URL HERE>
+#### Video Demo:  https://youtu.be/gREJP6iULo0
 
 #### Description:
 
@@ -12,7 +12,7 @@ This is also the reason I chose SQLAlchemy Core, it gives me a nice middle groun
 It has a split mode as administrator, who can set up database and do configurations like creating new machines and machine groups, 
 or an operator who can for example log incidents, list incidents and log new errors.
 
-I chose this as we use an exel sheet at work for this at the moment, so it is inspired by a real world factory case.
+I chose this as we use an Excel sheet at work for this at the moment, so it is inspired by a real world factory case.
 
 ## Installation
 
@@ -71,16 +71,16 @@ This gives you the following operator menu:
 ### --test
 
 it also has the otional value of --test
-This can be used togheter with --op or --admin in order to use a test database instead of a pproduction database.
+This can be used together with --op or --admin in order to use a test database instead of a pproduction database.
 Test database defaults to: sqlite:///test.db while production database defaults to: sqlite:///opexio.db
 
 This enables experimenting and training on a non crucial database.
 
-The test mode is acccessed by typing:
+The test mode is accessed by typing:
 
 > python project.py [--mode] --test
 
-Where [--mode] is eiher  --op or --admin
+Where [--mode] is either  --op or --admin
 
 ## Files
 

@@ -1,9 +1,9 @@
-# This filr handles the command line interface for the application. It is responsible for handling user like arguments/flags and different user submenus 
+# This file handles the command line interface for the application. It is responsible for handling user like arguments/flags and different user submenus 
 # for admin and operator. It calls the appropriate functions in the cli_handlers.py file based on user input.
 
-from db import Database #, tblIGroups, tblIMachines, tblIResolved
+from db import Database
 import cli_handlers
-# from datetime import datetime, timezone, timedelta
+
 
     
     
@@ -13,13 +13,12 @@ def admin_module(database_URL: str):
     # Menu options for admin mode as dictionary
     options = {
             "Exit": "0",
-            "Setup database (DEPRECATED, Setup in project.py)": "1",
-            "Create new groups and machines": "2", 
-            "Create new machine for existing group": "3", 
-            "Create new resolved status": "4", 
-            "Delete groups": "5", 
-            "Delete machine": "6", 
-            "Delete resolved status": "7", 
+            "Create new groups and machines": "1", 
+            "Create new machine for existing group": "2", 
+            "Create new resolved status": "3", 
+            "Delete groups": "4", 
+            "Delete machine": "5", 
+            "Delete resolved status": "6", 
             }
     
     choice = ""
@@ -29,25 +28,23 @@ def admin_module(database_URL: str):
             print("\nAdmin Menu:\n")
             for keys in options:
                 print(f"Press {options[keys]} for {keys}")
-            choice = input("Enter your choise: ").strip()    
+            choice = input("Enter your choice: ").strip()    
 
             match choice:
                 case "0": # Exit
                     print("Exiting admin menu")
                     break
-                case "1": # Setup database
-                    handler.handle_setup_database()
-                case "2": # Create groups and machines
+                case "1": # Create groups and machines
                     handler.create_groups_and_machines_handler()
-                case "3": # Create new machine for existing group
+                case "2": # Create new machine for existing group
                     handler.create_new_machine_for_existing_group_handler()
-                case "4": # Create new resolved status
+                case "3": # Create new resolved status
                     handler.create_new_resolved_status_handler()
-                case "5": # Delete groups
+                case "4": # Delete groups
                     handler.delete_groups_handler()
-                case "6": # Delete machine from existing group
+                case "5": # Delete machine from existing group
                     handler.delete_machine_handler()
-                case "7": # Delete resolved status
+                case "6": # Delete resolved status
                     handler.delete_resolved_status()
                 case _:
                     print("Invalid choice, try again")
@@ -71,7 +68,7 @@ def operator_module(database_URL: str):
         print("\nOperator menu\n")
         for keys in options:
             print(f"Press {options[keys]} for {keys}")
-        choice = input("Enter your choise: ").strip()    
+        choice = input("Enter your choice: ").strip()    
 
         match choice:
             case "0":

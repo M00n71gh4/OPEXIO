@@ -93,7 +93,7 @@ class AdminHandler:
         if group_number.isdigit() and 1 <= int(group_number) <= len(menu):
             new_machine = input("The name of the new machine: ").strip()
             
-        print(self.db.insert_machine(new_machine, group_number))
+            print(self.db.insert_machine(new_machine, group_number))
         
     def create_new_resolved_status_handler(self): # Admin menu choice 4
         """ This function allows the admin to create a new resolved status option or populates the table with default statuses.
@@ -258,12 +258,11 @@ class OperatorHandler:
         """
         error_map = menu_map(self.db.list_errors(machine_id=machine_ID))
         print("\nPress 0 to go back")
-        print("Press n to create a new error for this machine")
         for key in error_map:
             print(f"Press {key} to use error number: {error_map[key]['errorNumber']} Name: {error_map[key]['errorName']} - ID: {error_map[key]['id']} MAchine: {error_map[key]['machineID']}")
         
         while True:
-            chosen_error = input("\nEnter error number: ").strip()
+            chosen_error = input("\nEnter error number, or 'n' to create a new error for this machine: ").strip()
 
             if chosen_error.lower() == "n":
                 return "n"
@@ -277,7 +276,7 @@ class OperatorHandler:
                 print("Invalid error selected, try again")
                 
     def new_incident_handler(self)->int:
-        """ This function handles the creation of a new incident. It guides the user through the process of selecting a machine, resolved status, error, occurance time, 
+        """ This function handles the creation of a new incident. It guides the user through the process of selecting a machine, resolved status, error, occurrence time, 
             resolved time and notes for the incident. It then calls the appropriate database functions to insert the new incident into the database.
 
         Returns:
@@ -320,20 +319,20 @@ class OperatorHandler:
         if connection_ID:
             print(f"Error {error_ID} connected to machine {machine_ID} with connection ID {connection_ID}")        
 
-        # Occurance time selection (default to current time)
+        # Occurrence time selection (default to current time)
         while True:
-            occurance_time = input(f"Enter occurance time in format {self.date_format_human} or press enter to use current time: ").strip()
-            if occurance_time == "":
-                occurance_time = local_time_now(LOCAL_TIMEZONE)
+            occurrence_time = input(f"Enter occurrence time in format {self.date_format_human} or press enter to use current time: ").strip()
+            if occurrence_time == "":
+                occurrence_time = local_time_now(LOCAL_TIMEZONE)
                 break
             else:
                 try:
-                    occurance_time = check_datetime(occurance_time, self.date_format_computer, self.date_format_human, LOCAL_TIMEZONE)
+                    occurrence_time = check_datetime(occurrence_time, self.date_format_computer, self.date_format_human, LOCAL_TIMEZONE)
                     break
                 except ValueError as e:
                     print(f"Invalid date format: {e}")    
 
-        print(f"Occurance time set to current time: {occurance_time}")
+        print(f"Occurrence time set to current time: {occurrence_time}")
 
         # Resolved time selection (default to None)
         while True:
@@ -351,7 +350,7 @@ class OperatorHandler:
         # Notes input    
         notes = input("Enter any additional notes for the incident (optional): ").strip()
             
-        insert_result = self.db.insert_incident(machine_ID=machine_ID, resolved_ID=resolved_ID, error_ID=error_ID, occurrence_time=occurance_time, resolved_time=resolved_time, notes=notes)
+        insert_result = self.db.insert_incident(machine_ID=machine_ID, resolved_ID=resolved_ID, error_ID=error_ID, occurrence_time=occurrence_time, resolved_time=resolved_time, notes=notes)
         if insert_result:
             print(f"New incident created with ID {insert_result}")
             return insert_result
@@ -424,15 +423,24 @@ class OperatorHandler:
         """
         print(f"Write search from date in format {self.date_format_human} or press enter to list incidents last 24 hours")
         from_date_time = input("From date and time: ").strip()
-        to_date_time = None
-
-        if from_date_time == "":
+        to_date_time = input("To date and time: ").strip()
+        
+        
+        try:
+            if from_date_time == "":
+                from_date_time = local_time_now(LOCAL_TIMEZONE) - timedelta(days=1)
+            else:
+                from_date_time = check_datetime(from_date_time, self.date_format_computer, self.date_format_human, LOCAL_TIMEZONE)
+                
+            if to_date_time == "":
+                to_date_time = local_time_now(LOCAL_TIMEZONE)
+            else:
+                to_date_time = check_datetime(to_date_time, self.date_format_computer, self.date_format_human, LOCAL_TIMEZONE)
+        except ValueError as e:
+            print(f"Invalid date format: {e}, using default date range of last 24 hours")
             from_date_time = local_time_now(LOCAL_TIMEZONE) - timedelta(days=1)
             to_date_time = local_time_now(LOCAL_TIMEZONE)
-        else:
-            to_date_time = input("To date and time: ").strip()
-            from_date_time = check_datetime(from_date_time, self.date_format_computer, self.date_format_human, LOCAL_TIMEZONE)
-            to_date_time = check_datetime(to_date_time, self.date_format_computer, self.date_format_human, LOCAL_TIMEZONE)
+            
 
         print(f"\nSearching incidents from {from_date_time} to {to_date_time}")
         result = self.db.list_incidents(start_date=from_date_time, end_date=to_date_time)

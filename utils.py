@@ -3,34 +3,8 @@ from typing import Any, Optional
 from zoneinfo import ZoneInfo
 
 
-
-# NOTE: status function is intended for future API development, but is not currently used in the CLI implementation. 
-# It is included here for completeness and future use.
-def status(code: int, message: str, payload: Optional[Any]=None) -> dict:
-    """ Creates a standardized status response.
-    Args:
-        code (int): Return status code
-        message (str): Return status message
-        payload (Optional[Any], optional): Return Payload, can be any datatype. Defaults to None.
-
-    Returns:
-        dict: Returns a dict with keys: code, message and payload.
-    """
-    return {"code":code,
-        "message": message, 
-        "payload": payload}
-
-def status_ok(payload: Optional[Any]=None) -> dict:
-    """Standard success response (code 200)."""
-    return status(200, "Successful", payload)
-    
-def status_error(payload: Optional[Any]=None) -> dict:
-    """Standard error response (code 400)."""
-    return status(400, "Unsuccessful", payload)
-
 def menu_map(options: list) -> dict: 
     
-    {i + 1: item for i, item in enumerate(options)}
     group_map = {}
     i = 0
     for item in options:

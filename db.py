@@ -72,19 +72,16 @@ resolved_statuses = (
 
 
 class Database:
-    def __init__(self, db_URL: str, echo: bool=False)-> bool:
+    def __init__(self, db_URL: str, echo: bool=False):
         """initializes Database and creates an SQLAlchemy core database engine
 
         Args:
             db_URL (str): Path do database
             echo (bool, optional): Debug mode, logs SQL strings to console. Defaults to False.
-            
-        Returns:            
-            bool: Returns True if the connection is sucessfull, False if not.
         """
         self.db_URL = db_URL
         self.engine = create_engine(db_URL, echo=echo)
-        return True
+        
     def check_if_database_exists(self) -> bool:
         """Checks if the database exists by checking the file.
 
@@ -173,10 +170,8 @@ class Database:
         if conditions:
             stm = stm.where(*conditions)
 
-
-        else:
-            with self.engine.connect() as conn:    
-                return conn.execute(stm).mappings().all() #.fetchall() is legacy core 1.x, .all() is core 2.x way
+        with self.engine.connect() as conn:    
+            return conn.execute(stm).mappings().all() #.fetchall() is legacy core 1.x, .all() is core 2.x way
             #return False
 
     def list_incidents(self, resolved_id: int=None, machine_id: int=None, start_date: datetime=None, end_date: datetime=None, note_search: str=None)-> list:
@@ -324,9 +319,9 @@ class Database:
         """
         with self.engine.begin() as conn:
             # Gets a list of existing resolved statuses in the database
-            exixting_statuses = conn.execute(select(tblIResolved.c.resolvedStatus)).scalars().all()
-            exisiting_statuses_set = set(exixting_statuses)
-            missing_statuses = [s for s in status if s['resolvedStatus'] not in exisiting_statuses_set]
+            existing_statuses = conn.execute(select(tblIResolved.c.resolvedStatus)).scalars().all()
+            existing_statuses_set = set(existing_statuses)
+            missing_statuses = [s for s in status if s['resolvedStatus'] not in existing_statuses_set]
             
             # If there are no missing statuses, return 0 to indicate that no new rows were inserted
             # If there are missing statuses, insert them and return the number of rows inserted

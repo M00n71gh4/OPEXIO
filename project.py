@@ -31,8 +31,8 @@ def main():
         print(f"Database {database} does not exist. Please set up the database first.")
         setup = input("Do you want to set up the database now? (Y to set up, C to continue with no database): ")
         if setup.lower() == 'y':
-            print(f"Setting up database {setup_database(database)}...")
-            
+            num_tables, table_list = setup_database(database)
+            print(f"Created {num_tables} tables: {table_list}")
             load_cli = True
         else:
             quit = input("Press enter to continue to application with no database, or 'q' to quit.")
